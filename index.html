@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主创匹配引擎 - "帧查官"智能分析系统</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .logo-icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--secondary-color);
+            background-color: #f8fafc;
+        }
+        
+        .tab:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .tab i {
+            margin-right: 8px;
+        }
+        
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            font-size: 1.4rem;
+        }
+        
+        .match-result {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .match-score {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin-right: 20px;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .match-description {
+            flex: 1;
+        }
+        
+        .match-description h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .team-card {
+            background-color: var(--light-color);
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .team-role {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .team-role i {
+            margin-right: 8px;
+            color: var(--secondary-color);
+        }
+        
+        .person-card {
+            background-color: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .person-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+        }
+        
+        .person-info {
+            flex: 1;
+        }
+        
+        .person-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+        
+        .person-match {
+            font-size: 0.9rem;
+            color: var(--dark-color);
+        }
+        
+        .person-score {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .recommendation-reasons {
+            background-color: #f0f7ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .reason-item {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .reason-item i {
+            color: var(--success-color);
+            margin-right: 8px;
+            margin-top: 3px;
+        }
+        
+        .risk-item {
+            background-color: #fff5f5;
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .risk-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--accent-color);
+        }
+        
+        .alternatives {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .alt-card {
+            flex: 1;
+            min-width: 250px;
+            background-color: var(--light-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .alt-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .alt-title i {
+            margin-right: 8px;
+            color: var(--secondary-color);
+        }
+        
+        .cost-analysis {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .cost-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .cost-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: var(--primary-color);
+        }
+        
+        .cost-label {
+            font-size: 0.9rem;
+            color: var(--dark-color);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--dark-color);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .match-result {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .match-score {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-film"></i>
+                </div>
+                <div>
+                    <h1>主创匹配引擎</h1>
+                    <p class="subtitle">为《时空密语》推荐最优主创团队</p>
+                </div>
+            </div>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active">
+                <i class="fas fa-user-friends"></i> 导演匹配
+            </div>
+            <div class="tab">
+                <i class="fas fa-star"></i> 演员匹配
+            </div>
+            <div class="tab">
+                <i class="fas fa-pen-nib"></i> 编剧匹配
+            </div>
+            <div class="tab">
+                <i class="fas fa-chart-pie"></i> 综合成本分析
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title"><i class="fas fa-tachometer-alt"></i> 匹配结果概览</h2>
+            
+            <div class="match-result">
+                <div class="match-score">89%</div>
+                <div class="match-description">
+                    <h3>高度匹配的主创团队</h3>
+                    <p>基于剧本《时空密语》的类型特征（科幻/悬疑/爱情）、情节结构和角色需求，我们为您匹配了高度契合的主创团队。该团队在风格适配性、市场受众重合度和过往合作效果方面表现优异。</p>
+                </div>
+            </div>
+            
+            <div class="risk-item">
+                <div class="risk-title">风险提示</div>
+                <p>导演陈默与女主角候选人林晓尚无合作历史，建议安排试镜以确认化学反应。</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title"><i class="fas fa-user-friends"></i> 导演匹配结果</h2>
+            
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="team-role"><i class="fas fa-crown"></i> 首选导演</div>
+                    
+                    <div class="person-card">
+                        <div class="person-avatar">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="person-info">
+                            <div class="person-name">陈默</div>
+                            <div class="person-match">匹配度: <span class="person-score">92%</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-reasons">
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>擅长科幻悬疑题材，作品《时间迷局》获得金鸡奖最佳导演提名</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>与编剧张伟有两次成功合作经验，配合默契</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>风格与剧本的悬疑氛围和情感深度高度契合</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-card">
+                    <div class="team-role"><i class="fas fa-medal"></i> 备选导演</div>
+                    
+                    <div class="person-card">
+                        <div class="person-avatar">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="person-info">
+                            <div class="person-name">王静</div>
+                            <div class="person-match">匹配度: <span class="person-score">85%</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-reasons">
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>女性导演视角，擅长处理情感细腻的科幻作品</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>作品《星辰之恋》在流媒体平台获得高评分</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>档期灵活，成本相对较低</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title"><i class="fas fa-star"></i> 演员匹配结果</h2>
+            
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="team-role"><i class="fas fa-female"></i> 女主角 - 林晓</div>
+                    
+                    <div class="person-card">
+                        <div class="person-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="person-info">
+                            <div class="person-name">周雨薇</div>
+                            <div class="person-match">匹配度: <span class="person-score">88%</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-reasons">
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>具有科学背景角色演出经验，在《量子纠缠》中表现突出</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>粉丝画像与科幻悬疑类型观众高度重合</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>与男主角候选人吴昊有良好的银幕化学反应</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-card">
+                    <div class="team-role"><i class="fas fa-male"></i> 男主角 - 陈默</div>
+                    
+                    <div class="person-card">
+                        <div class="person-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="person-info">
+                            <div class="person-name">吴昊</div>
+                            <div class="person-match">匹配度: <span class="person-score">90%</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-reasons">
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>记者角色专业户，在多部悬疑剧中塑造类似角色成功</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>与导演陈默合作过两次，默契度高</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>商业价值高，有稳定的票房号召力</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="team-card">
+                    <div class="team-role"><i class="fas fa-user-secret"></i> 反派 - 赵博士</div>
+                    
+                    <div class="person-card">
+                        <div class="person-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="person-info">
+                            <div class="person-name">张国立</div>
+                            <div class="person-match">匹配度: <span class="person-score">95%</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-reasons">
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>资深演员，擅长塑造复杂多层次的反派角色</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>具有科学权威气质，符合角色设定</div>
+                        </div>
+                        <div class="reason-item">
+                            <i class="fas fa-check-circle"></i>
+                            <div>与年轻演员搭配经验丰富，能提升整体表演水准</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title"><i class="fas fa-pen-nib"></i> 编剧优化建议</h2>
+            
+            <div class="team-card">
+                <div class="team-role"><i class="fas fa-user-edit"></i> 剧本医生推荐</div>
+                
+                <div class="person-card">
+                    <div class="person-avatar">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <div class="person-info">
+                        <div class="person-name">李思源</div>
+                        <div class="person-match">匹配度: <span class="person-score">87%</span></div>
+                    </div>
+                </div>
+                
+                <div class="recommendation-reasons">
+                    <div class="reason-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>专长科幻与悬疑类型融合，作品《时间迷宫》获得华表奖最佳编剧</div>
+                    </div>
+                    <div class="reason-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>擅长强化角色弧光，可帮助深化配角苏雨的角色深度</div>
+                    </div>
+                    <div class="reason-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>与导演陈默有过成功合作，沟通效率高</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="risk-item" style="margin-top: 20px;">
+                <div class="risk-title">剧本优化重点</div>
+                <p>建议李思源老师重点关注：1) 第二幕节奏优化；2) 配角苏雨的角色深化；3) 情感高潮部分的铺垫增强。</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title"><i class="fas fa-chart-pie"></i> 成本与市场潜力分析</h2>
+            
+            <div class="cost-analysis">
+                <div class="cost-card">
+                    <div class="cost-label">预计制作成本</div>
+                    <div class="cost-value">1.2亿</div>
+                    <div class="cost-detail">人民币</div>
+                </div>
+                <div class="cost-card">
+                    <div class="cost-label">主创团队成本</div>
+                    <div class="cost-value">4800万</div>
+                    <div class="cost-detail">占40%</div>
+                </div>
+                <div class="cost-card">
+                    <div class="cost-label">预测票房收入</div>
+                    <div class="cost-value">3.5-5亿</div>
+                    <div class="cost-detail">人民币</div>
+                </div>
+                <div class="cost-card">
+                    <div class="cost-label">投资回报率</div>
+                    <div class="cost-value">192%-317%</div>
+                    <div class="cost-detail">基于预测</div>
+                </div>
+            </div>
+            
+            <div class="risk-item" style="margin-top: 20px;">
+                <div class="risk-title">成本风险提示</div>
+                <p>男主角吴昊的片酬占主创成本的35%，如预算有限可考虑备选演员刘畅（匹配度82%，成本降低40%）。</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title"><i class="fas fa-lightbulb"></i> 综合建议</h2>
+            
+            <div class="alternatives">
+                <div class="alt-card">
+                    <div class="alt-title"><i class="fas fa-award"></i> 最优组合</div>
+                    <p>导演陈默 + 演员周雨薇/吴昊/张国立 + 剧本医生李思源</p>
+                    <p style="margin-top: 10px; font-weight: bold; color: var(--secondary-color);">综合匹配度: 89%</p>
+                </div>
+                <div class="alt-card">
+                    <div class="alt-title"><i class="fas fa-balance-scale"></i> 性价比组合</div>
+                    <p>导演王静 + 演员周雨薇/刘畅/张国立 + 剧本医生李思源</p>
+                    <p style="margin-top: 10px; font-weight: bold; color: var(--secondary-color);">综合匹配度: 82% | 成本降低: 25%</p>
+                </div>
+                <div class="alt-card">
+                    <div class="alt-title"><i class="fas fa-rocket"></i> 商业最大化组合</div>
+                    <p>导演陈默 + 演员杨幂/吴昊/张国立 + 剧本医生李思源</p>
+                    <p style="margin-top: 10px; font-weight: bold; color: var(--secondary-color);">综合匹配度: 85% | 市场热度: +30%</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>本报告由"帧查官"AI影视决策支持系统生成 · 报告编号: ZCG20231026002</p>
+            <p>数据基于影视人才数据库与市场表现分析，仅供参考</p>
+        </div>
+    </div>
+
+    <script>
+        // 标签切换功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有标签的active类
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // 为当前点击的标签添加active类
+                    this.classList.add('active');
+                    
+                    // 在实际应用中，这里应该加载对应标签的内容
+                    // 此示例中我们只是简单演示交互效果
+                });
+            });
+            
+            // 为团队卡片添加点击效果
+            const teamCards = document.querySelectorAll('.team-card');
+            teamCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+                    setTimeout(() => {
+                        this.style.boxShadow = '';
+                    }, 300);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
